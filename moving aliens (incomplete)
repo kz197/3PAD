@@ -1,0 +1,82 @@
+import time
+from tkinter import *
+root = Tk()
+root.geometry("800x600")
+coords = None
+w = 800 
+h = 600
+x = w/2
+y = h /2 
+
+window = Canvas(root, width = w , height = h, bg ='black')
+window.pack()
+
+player = window.create_oval (10,580,20,590,outline = 'red')
+
+def move_aliens():
+    enemy_list = [enemy1, enemy2, enemy3, enemy4,enemy5,enemy6,enemy7,enemy8,enemy9]
+
+    for enemy in enemy_list: 
+        window.move(enemy,30,0)
+        enemy_coords = window.coords(enemy1)
+        print(enemy_coords)
+    print("ypated")
+    root.after(2000, lambda: move_aliens())
+
+
+
+
+
+
+enemy1 = window.create_rectangle(10, 10, 40, 40, outline="white")
+enemy2 = window.create_rectangle(50, 10, 80, 40, outline="white")
+enemy3 = window.create_rectangle(90, 10, 120, 40, outline="white")
+enemy4 = window.create_rectangle(10, 50, 40, 80, outline="white")
+enemy5 = window.create_rectangle(50, 50, 80, 80, outline="white")
+enemy6 = window.create_rectangle(90, 50, 120, 80, outline="white")
+enemy7 = window.create_rectangle(10, 90, 40, 120, outline="white")
+enemy8 = window.create_rectangle(50, 90, 80, 120, outline="white")
+enemy9 = window.create_rectangle(90, 90, 120, 120, outline="white")
+
+def left(event):
+    x = -10
+    y = 0
+    window.move(player,x,y)
+    print(window.coords(player))
+
+def right(event):
+    x = 10
+    y = 0
+    window.move(player,x,y)
+    print(window.coords(player))
+
+def down(event):
+    x = 0
+    y = -10
+    window.move(player,x,y)
+    print(window.coords(player))
+
+def up(event):
+    x = 0
+    y = 10
+    window.move(player,x,y)
+    print(window.coords(player))
+
+
+move_aliens()
+root.bind("<Left>", left)
+root.bind("<Right>",right)
+#root.bind("<Up>",up)
+#root.bind("<Down>",down)
+
+
+
+
+
+
+
+
+
+
+
+window.mainloop()
