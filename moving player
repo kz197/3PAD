@@ -1,0 +1,47 @@
+import time
+from tkinter import *
+root = Tk()
+root.geometry("800x600")
+
+coords =  None
+w = 800 
+h = 600
+x = w/2
+y = h /2 
+
+window = Canvas(root, width = w , height = h, bg ='black')
+window.pack()
+
+player = window.create_oval (10,580,20,590,outline = 'red')
+
+def left(event):
+    x = -10
+    y = 0
+    window.move(player,x,y)
+    '''print(window.coords(player))'''
+
+def right(event):
+    x = 10
+    y = 0
+    window.move(player,x,y)
+    coords = window.coords(player)
+    print(coords)
+
+def down(event):
+    x = 0
+    y = 10
+    
+def up(event):
+    x = 0
+    y = -10
+    window.move(player,x,y)
+  
+root.bind("<Left>", left)
+root.bind("<Right>",right)
+root.bind("<Up>",up)
+root.bind("<Down>",down)
+
+if window.coords(player) != [360.0, 580.0, 370.0, 590.0]:
+    print("pepe")
+
+window.mainloop()
