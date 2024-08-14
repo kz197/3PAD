@@ -1,0 +1,112 @@
+import time
+import random
+from tkinter import *
+root = Tk()
+root.geometry("800x600")
+coords = None
+
+w = 800 
+h = 600
+x = w/2
+y = h /2 
+
+window = Canvas(root, width = w , height = h, bg ='black')
+window.pack()
+
+player = window.create_oval (10,580,20,590,outline = 'red')
+
+def move_aliens():
+    enemy_list = [enemy1, enemy2, ]
+
+    for enemy in enemy_list: 
+        window.move(enemy,30,0)
+        enemy_coords = window.coords(enemy1)
+        print(enemy_coords)
+        print("ypated")
+        if enemy_coords == [670.0, 10.0, 700.0, 40.0]:
+            for enemy in enemy_list:
+                window.move(enemy,0,30)
+        
+    root.after(200, lambda: move_aliens())
+
+def move_alien_L():
+    enemy_list = [enemy1, enemy2,enemy3,enemy4,enemy5,enemy6,enemy7,enemy8 ]
+    for enemy in enemy_list:
+        window.move(enemy,-30,0)
+    enemy_coordsl = window.coords(enemy1)
+    enemycoords2 = window.coords(enemy8)
+    print("yup")
+    print("left",enemy_coordsl)
+    print("right ",enemycoords2)
+
+def move_alien_r():
+    enemy_list = [enemy1, enemy2,enemy3,enemy4,enemy5,enemy6,enemy7,enemy8 ]
+    for enemy in enemy_list:
+        window.move(enemy,30,0)
+    enemy_coordsl = window.coords(enemy1)
+    enemycoords2 = window.coords(enemy8)
+    print("yup")
+    print("left",enemy_coordsl)
+    print("right ",enemycoords2)
+
+def move_aliens_random():
+    enemy_coords1 = window.coords(enemy1)
+    enemy_coords2 = window.coords(enemy8)
+
+    if enemy_coords1[0] < 10:
+        move_alien_r()  # Move right
+    elif enemy_coords2[2] > 770:
+        move_alien_L()  # Move left
+    else:
+        if random.choice([True, False]):
+            move_alien_L()  # Move left
+        else:
+            move_alien_r()  # Move right
+
+    root.after(200, move_aliens_random) 
+
+enemy1 = window.create_rectangle(10, 10, 40, 40, outline="white")
+enemy2 = window.create_rectangle(50, 10, 80, 40, outline="white")
+enemy3 = window.create_rectangle(90, 10, 120, 40, outline="white")
+enemy4 = window.create_rectangle(130, 10, 160, 40, outline="white")
+enemy5 = window.create_rectangle(170, 10, 200, 40, outline="white")
+enemy6 = window.create_rectangle(210, 10, 240, 40, outline="white")
+enemy7 = window.create_rectangle(250, 10, 280, 40, outline="white")
+enemy8 = window.create_rectangle(290, 10, 320, 40, outline="white")
+
+def left(event):
+    x = -10
+    y = 0
+    window.move(player,x,y)
+    print(window.coords(player))
+
+def right(event):
+    x = 10
+    y = 0
+    window.move(player,x,y)
+    print(window.coords(player))
+
+def down(event):
+    x = 0
+    y = -10
+    window.move(player,x,y)
+    print(window.coords(player))
+
+def up(event):
+    x = 0
+    y = 10
+    window.move(player,x,y)
+    print(window.coords(player))
+
+
+root.bind("<Left>", left)
+root.bind("<Right>",right)
+root.bind("<Up>",up)
+root.bind("<Down>",down)
+
+def start_game():
+    move_aliens_random()  
+
+root.after(100, start_game) 
+
+window.mainloop()
