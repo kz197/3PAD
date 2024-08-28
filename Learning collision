@@ -1,0 +1,63 @@
+from tkinter import *
+root= Tk()
+root.geometry("800x600")
+w= 800
+h = 600 
+
+window = Canvas(root, width=w ,height= h, bg = "black" )
+window.pack()
+
+Create_box = window.create_rectangle(200, 100, 260, 140, outline="white")
+
+def detect_collision():
+    # Get the bounding box coordinates of the player and the box
+    player_coords = window.bbox(player)
+    box_coords = window.bbox(Create_box)
+    
+    # Check for collision
+    if (player_coords[2] >= box_coords[0] and  # Player's right edge >= Box's left edge
+        player_coords[0] <= box_coords[2] and  # Player's left edge <= Box's right edge
+        player_coords[3] >= box_coords[1] and  # Player's bottom edge >= Box's top edge
+        player_coords[1] <= box_coords[3]):    # Player's top edge <= Box's bottom edge
+        print("Collision detected!")
+
+def move_player(x, y):
+    window.move(player, x, y)
+    detect_collision()
+
+player = window.create_oval (10,580,20,590,outline = 'red')
+
+def left(event):
+    x = -10
+    y = 0
+    window.move(player,x,y)
+    detect_collision()
+    #print(window.coords(player))
+
+def right(event):
+    x = 10
+    y = 0
+    window.move(player,x,y)
+    detect_collision()
+    #print(window.coords(player))
+
+def down(event):
+    x = 0
+    y = 10
+    window.move(player,x,y)
+    detect_collision()
+    #print(window.coords(player))
+
+def up(event):
+    x = 0
+    y = -10
+    window.move(player,x,y)
+    detect_collision()
+    #print(window.coords(player))
+
+root.bind("<Left>", left)
+root.bind("<Right>",right)
+root.bind("<Up>",up)
+root.bind("<Down>",down)
+
+window.mainloop()
