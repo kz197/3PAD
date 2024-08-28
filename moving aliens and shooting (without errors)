@@ -1,1 +1,170 @@
 
+import time
+import random
+from tkinter import *
+
+root = Tk()
+root.geometry("800x600")
+
+w = 800
+h = 600
+
+window = Canvas(root, width=w, height=h, bg='black')
+window.pack()
+
+player = window.create_oval(10, 580, 20, 590, outline='red')
+blasters = []  # List to hold multiple blaster shots
+aliens_frozen = False  # Flag to check if aliens are frozen
+
+# Variables to control the timer
+movement_duration = 10000  # 10 seconds in milliseconds
+move_down_interval = 2000  # 2 seconds between movements down
+start_time = None  # Track when the movement started
+
+def move_alien_L():
+    if not aliens_frozen:  # Move only if aliens are not frozen
+      
+        for enemy in enemy_list:
+            window.move(enemy, -30, 0)
+
+def move_alien_r():
+    if not aliens_frozen:  # Move only if aliens are not frozen
+       
+        for enemy in enemy_list:
+            window.move(enemy, 30, 0)
+
+def move_down():
+    if not aliens_frozen:  # Move only if aliens are not frozen
+       
+        for enemy in enemy_list:
+            window.move(enemy, 0, 30)  # Move down by 30 pixels
+
+        root.after(move_down_interval, start_movement)  # Restart the movement
+
+def move_aliens_random():
+    if not aliens_frozen:  # Move only if aliens are not frozen
+        enemy_coords1 = window.coords(enemy_list[0])
+        enemy_coords2 = window.coords(enemy_list[-1])
+
+        if enemy_coords1[0] < 10:
+            move_alien_r()  # Move right
+        elif enemy_coords2[2] > 770:
+            move_alien_L()  # Move left
+        else:
+            if random.choice([True, False]):
+                move_alien_L()  # Move left
+            else:
+                move_alien_r()  # Move right
+
+        current_time = time.time()
+        if current_time - start_time < movement_duration / 1000:  # Convert ms to seconds
+            root.after(200, move_aliens_random)  # Continue moving randomly
+        else:
+            move_down()  # Move down after 10 seconds
+
+def start_movement():
+    global start_time
+    start_time = time.time()  # Record the start time
+    move_aliens_random()  # Start moving the aliens
+
+def fire_blaster():
+    global aliens_frozen
+    blaster_coords = window.coords(player)
+    x = (blaster_coords[0] + blaster_coords[2]) / 2  # Center of the player
+    blaster = window.create_rectangle(x - 2, blaster_coords[1] - 10, x + 2, blaster_coords[1] - 5, fill='yellow')
+    blasters.append(blaster)  # Add the new blaster to the list
+    if not aliens_frozen:
+        aliens_frozen = True  # Freeze aliens when a shot is fired
+    move_blaster()  # Start moving the blaster
+
+def move_blaster():
+    global aliens_frozen
+    for i in range(len(blasters) - 1, -1, -1):  # Iterate over the blasters list in reverse order
+        blaster = blasters[i]
+        window.move(blaster, 0, -10)  # Move blaster upwards
+        blaster_coords = window.coords(blaster)
+        if blaster_coords[1] < 0:  # If blaster goes off screen
+            window.delete(blaster)
+            blasters.pop(i)  # Remove the blaster from the list
+        else:
+            check_collision(blaster, i)  # Check for collision with each movement
+
+    if not blasters:  # If all blasters are gone
+        aliens_frozen = False  # Unfreeze the aliens
+        root.after(200, start_movement)  # Resume alien movement
+
+    if blasters:  # Continue moving the blasters if any are still on screen
+        root.after(50, move_blaster)
+
+def check_collision(blaster, blaster_index):
+    global aliens_frozen
+    blaster_coords = window.coords(blaster)
+    if len(blaster_coords) < 4:
+        return  # Skip if blaster_coords is not valid
+    
+    for enemy in enemy_list:
+        enemy_coords = window.coords(enemy)
+        if len(enemy_coords) < 4:
+            continue  # Skip if enemy_coords is not valid
+        if (blaster_coords[2] > enemy_coords[0] and blaster_coords[0] < enemy_coords[2] and
+            blaster_coords[3] > enemy_coords[1] and blaster_coords[1] < enemy_coords[3]):
+            window.delete(enemy)  # Remove the enemy
+            enemy_list.remove(enemy)
+            window.delete(blaster)  # Remove the blaster
+            blasters.pop(blaster_index)  # Remove the blaster from the list
+
+            if enemy_list == []: 
+                for item in root.winfo_children():
+                    item.destroy()
+                Label(root, text= "GOOD GAMW").pack()
+            break
+
+enemy1 = window.create_rectangle(10, 10, 40, 40, outline="white")
+enemy2 = window.create_rectangle(50, 10, 80, 40, outline="white")
+enemy3 = window.create_rectangle(90, 10, 120, 40, outline="white")
+enemy4 = window.create_rectangle(130, 10, 160, 40, outline="white")
+enemy5 = window.create_rectangle(170, 10, 200, 40, outline="white")
+enemy6 = window.create_rectangle(210, 10, 240, 40, outline="white")
+enemy7 = window.create_rectangle(250, 10, 280, 40, outline="white")
+enemy8 = window.create_rectangle(290, 10, 320, 40, outline="white")
+global enemy_list
+enemy_list = [enemy1, enemy2, enemy3, enemy4, enemy5, enemy6, enemy7, enemy8]
+def left(event):
+    x = -10
+    y = 0
+    window.move(player, x, y)
+    print(window.coords(player))
+
+def right(event):
+    x = 10
+    y = 0
+    window.move(player, x, y)
+    print(window.coords(player))
+
+def down(event):
+    x = 0
+    y = 10
+    window.move(player, x, y)
+    print(window.coords(player))
+
+def up(event):
+    x = 0
+    y = -10
+    window.move(player, x, y)
+    print(window.coords(player))
+
+def fire(event):
+    fire_blaster()
+
+root.bind("<Left>", left)
+root.bind("<Right>", right)
+#root.bind("<Up>", up)
+#root.bind("<Down>", down)
+root.bind("<space>", fire)  # Bind spacebar to fire blaster
+
+def start_game():
+    start_movement()  # Start the movement
+
+root.after(100, start_game)
+
+window.mainloop()
