@@ -1,9 +1,19 @@
+'''
+This code is made by Kevin Zhang 
+This is a maths game used to help people of all ages get better at arithmetic. 
+05//09/2024
+'''
+
 import tkinter as tk  # Import tkinter for GUI creation
 from tkinter import messagebox, PhotoImage  # Import specific tkinter modules for messages and images
 import random  # Import random module for random question generation
 import time  # Import time module for managing time-related functions
 import json  # Import json module for handling JSON data
 
+
+'''
+The login form class, this houses all the code responsible for running the login screen. 
+'''
 class LoginForm:
     def __init__(self, root):  # Initialize LoginForm class
         self.root = root  # Assign the root window to self.root
@@ -17,7 +27,9 @@ class LoginForm:
             self.credentials = json.load(f)["users"]  # Load and store users' credentials from the file
 
         self.create_widgets()  # Call method to create the widgets
-
+    '''
+    Creates all of the tkinter components(gui) for the login screen
+    '''
     def create_widgets(self):
         frame = tk.Frame(self.root, bg='#142B42')  # Create a frame with a specified background color
 
@@ -41,6 +53,10 @@ class LoginForm:
 
         frame.pack()  # Pack the frame into the root window
 
+    '''
+    Evaluates the login credentials of the user
+    '''
+
     def login(self, event=None):  # Define the login method
         username = self.username_entry.get()  # Get the entered username
         password = self.password_entry.get()  # Get the entered password
@@ -60,7 +76,9 @@ class LoginForm:
 
         # If no match was found, show an error
         messagebox.showerror(title="Error", message="Wrong credentials")  # Show error message
-
+    '''
+    Adds the user's information to the json file, creates a new account 
+    '''
     def add_user(self):  # Define the add_user method
         username = self.username_entry.get()  # Get the entered username
         password = self.password_entry.get()  # Get the entered password
@@ -100,7 +118,9 @@ class LoginForm:
             widget.destroy()  # Destroy all widgets in the root window
 
         AlienShooterGame(self.root)  # Launch the game
-
+'''
+the game screen responsible for holding the maths and shooter screen
+'''
 class AlienShooterGame:
     def __init__(self, root):
         self.root = root
@@ -120,7 +140,9 @@ class AlienShooterGame:
         self.root.bind("<Return>", self.evaluate)
         self.root.bind("<space>", self.fire)
         self.root.after(100, self.start_game)
-
+    '''
+    creates the tkinter objects, ie. lable, button etc
+    '''
     def create_widgets(self):
         self.canvas_title = tk.Label(self.root, text="MATH'S  INVADERS",bg='#52e5b0', font=("Rage Italic", 60)) 
         self.canvas_title.grid(row=0, column=1, padx=100, pady=5)
@@ -157,13 +179,17 @@ class AlienShooterGame:
 
         solution_entry = tk.Button(question_screen, text="Answer", command=lambda: self.evaluate(None),bg="#6C5B7B")
         solution_entry.grid(row=2, column=3)
-
+    '''
+    Calls the generate quesiton fucntion to generate a new question
+    '''
     def generate_new_question(self):
     # Generate a new question and its answer using level 1 difficulty
         self.answer, self.question = self.generate_question_level_1()
         # Set the new question to be displayed
         self.q_variable.set(self.question)
-
+    '''
+    creates a random maths quesiton with 2 randnom bumber between 0,10 and a random operation
+    '''
     def generate_question_level_1(self):
         while True:
             # Generate two random numbers between 0 and 10
@@ -199,7 +225,9 @@ class AlienShooterGame:
                 answer = n1 * n2
             # Return the generated answer and question
             return answer, question
-
+    '''
+    Creates a random maths quesiton with a randnom bumber between 0,10, random numeber bwteen 0,100 and a random operation
+    '''
     def generate_question_level_2(self):
         while True:
             # Generate two random numbers: one between 0 and 100, the other between 0 and 10
@@ -234,7 +262,9 @@ class AlienShooterGame:
                 answer = n1 * n2
             # Return the generated answer and question
             return answer, question
-
+    '''
+    creates a random maths quesiton with 2 randnom bumber between 0,100 and a random operation
+    '''
     def generate_question_level_3(self):
         while True:
             # Generate two random numbers between 0 and 100
@@ -270,7 +300,9 @@ class AlienShooterGame:
             # Return the generated answer and question
             return answer, question
     
-
+    '''
+    Evaluates the inputed answer from the user then generates a new question 
+    '''
     def evaluate(self, event):
         try:
             # Get the user's answer input and convert it to an integer
@@ -289,16 +321,22 @@ class AlienShooterGame:
             # Handle invalid inputs (non-numeric)
             messagebox.showwarning("Really?", "Please enter a valid number.")
             self.solution_input.delete(0, tk.END)
-
+    '''
+    Starts the game
+    '''
     def start_game(self):
         # Start the movement of aliens to begin the game
         self.start_movement()
-
+    '''
+    Starts the aline left right random movement
+    '''
     def start_movement(self):
         # Record the start time and move aliens randomly
         self.start_time = time.time()
         self.move_aliens_random()
-
+    '''
+    Randomly moves the aliens left to right 
+    '''
     def move_aliens_random(self):
         if not self.aliens_frozen:
             # Get the coordinates of the first and last alien
@@ -322,30 +360,41 @@ class AlienShooterGame:
                 self.root.after(200, self.move_aliens_random)
             else:
                 self.move_down()
-
+    '''
+    Moves the alines left 
+    '''
     def move_alien_L(self):
         # Move all aliens to the left by 30 pixels
         if not self.aliens_frozen:
             for enemy in self.enemy_list:
                 self.shooter_screen.move(enemy, -30, 0)
 
+    '''
+    Moves the alines right 
+    '''
     def move_alien_r(self):
         # Move all aliens to the right by 30 pixels
         if not self.aliens_frozen:
             for enemy in self.enemy_list:
                 self.shooter_screen.move(enemy, 30, 0)
-
+    '''
+    Moves the aliens down 
+    '''
     def move_down(self):
         # Move all aliens down by 30 pixels and restart movement
         if not self.aliens_frozen:
             for enemy in self.enemy_list:
                 self.shooter_screen.move(enemy, 0, 30)
             self.root.after(self.move_down_interval, self.start_movement)
-
+    '''
+    Calls the fire projectile function 
+    '''
     def fire(self, event):
         # Fire the blaster when an event (such as a keypress) occurs
         self.fire_blaster()
-
+    '''
+    Fires a projectile
+    '''
     def fire_blaster(self):
     # Freeze alien movement temporarily when firing
         self.aliens_frozen = True
@@ -383,7 +432,9 @@ class AlienShooterGame:
 
         # Move the blaster
         self.move_blaster()
-
+    '''
+    Moves the projectile and detetc collisions
+    '''
     def move_blaster(self):
         aliens_destroyed = False
 
@@ -421,8 +472,9 @@ class AlienShooterGame:
         else:
             self.aliens_frozen = False
 
-
-
+    '''
+    Checks for projectile collision with the aliens 
+    '''
     def check_collision(self, blaster, alien):
     # Get the coordinates of the blaster and the alien
         blaster_coords = self.shooter_screen.coords(blaster)
