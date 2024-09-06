@@ -1,0 +1,412 @@
+import tkinter as tk
+from tkinter import messagebox, PhotoImage
+import random
+import time
+import json
+
+SPACESHIP_IMAGE_PATH = "spaceshipimg.png"
+
+class LoginForm:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("MATH'S INVADERS")
+        self.root.geometry('400x500')
+        self.root.configure(bg='#142B42')  
+        self.root.bind("<Return>", self.login)
+
+        # Load credentials from the JSON file
+        with open("login_credentials.json", "r") as f:
+            self.credentials = json.load(f)["users"]
+
+        self.create_widgets()
+
+    def create_widgets(self):
+        frame = tk.Frame(self.root, bg='#142B42')#142B42
+
+        # Creating widgets
+        login_label = tk.Label(frame, text="Login", bg='#142B42', fg="#97D5E0", font=("Georgia", 30))
+        Username_label = tk.Label(frame, text="Username", bg='#142B42', fg="#FFFFFF", font=("Georgia", 16))
+        self.Username_entry = tk.Entry(frame, font=("Georgia", 16))
+        password_label = tk.Label(frame, text="Password", bg='#142B42', fg="#FFFFFF", font=("Georgia", 16))
+        self.password_entry = tk.Entry(frame, show="*", font=("Georgia", 16))
+        login_button = tk.Button(frame, text="Login", bg="#97D5E0", fg="#FFFFFF", font=("Georgia", 16), height = 1, width= 30, command=self.login)
+        add_user_button = tk.Button(frame, text="Add user ", bg="#97D5E0", fg="#FFFFFF", font=("Georgia", 16), height = 1, width= 30, command=self.add_user)
+
+        # Placing widgets on the screen
+        login_label.grid(row=0, column=0, columnspan=2, sticky="news", pady=40)
+        Username_label.grid(row=1, column=0)
+        self.Username_entry.grid(row=1, column=1, pady=20)
+        password_label.grid(row=2, column=0)
+        self.password_entry.grid(row=2, column=1, pady=20)
+        login_button.grid(row=3, column=0, columnspan=3, pady=30)
+        add_user_button.grid(row=4, column=0, columnspan=3, pady=30)
+
+        frame.pack()
+
+    def login(self,event=None):
+        Username = self.Username_entry.get()
+        password = self.password_entry.get()
+
+        # Check if the entered Username and password match any in the credentials
+        for user in self.credentials:
+            if user['username'] == Username and user['password'] == password:
+                messagebox.showinfo(title="Login Success", message="You successfully logged in.")
+                
+                # Clear the login form
+                root.destroy()
+                
+                # Start the Alien Shooter Game
+                AlienShooterGame(tk.Tk())
+                return
+
+        # If no match was found, show an error
+        messagebox.showerror(title="Error", message= "Wrong credentials")
+
+    def add_user(self):
+        Username = self.Username_entry.get()
+        password = self.password_entry.get()
+        new_user = {"username": Username, "password": password}
+        if not Username or not password:
+            messagebox.showwarning(title="Error", message= "Fill in all fields")
+            return
+        # Read existing data
+        try:
+            with open("login_credentials.json", "r") as f:
+                try:
+                    all_data = json.load(f)
+                    users = all_data.get("users", [])
+                except json.JSONDecodeError:
+                    users = []
+        except FileNotFoundError:
+            users = []
+
+        # Check if the Username already exists
+        for user in users:
+            if user['username'] == Username:
+                messagebox.showerror(title="Error", message="Username already exists.")
+                return
+
+        # Append new user data
+        users.append(new_user)
+        
+        # Write all data back to the file
+        with open("login_credentials.json", "w") as f:
+            json.dump({"users": users}, f, indent=4)
+
+        messagebox.showinfo(title="Success", message="Successfully added user")
+
+        # Clear the form and start the Alien Shooter Game
+        root.destroy()
+
+        AlienShooterGame(tk.Tk())
+
+class AlienShooterGame:
+    def __init__(self, root):
+        self.root = root
+        self.root.config(bg='#201459')
+        self.root.geometry("1000x1200")
+
+        self.enemy_list = []
+        self.blasters = []
+        self.aliens_frozen = False
+        self.movement_duration = 10000  # 10 seconds in milliseconds
+        self.move_down_interval = 2000  # 2 seconds between movements down
+        self.start_time = None
+
+        self.create_widgets()
+        self.generate_new_question()
+
+        self.root.bind("<Return>", self.evaluate)
+        self.root.bind("<space>", self.fire)
+        self.root.after(100, self.start_game)
+
+    def create_widgets(self):
+        self.canvas_title = tk.Label(self.root, text="MATH'S  INVADERS",bg='#52e5b0', font=("Rage Italic", 60)) 
+        self.canvas_title.grid(row=0, column=1, padx=100, pady=5)
+
+        # Shooter screen
+        self.shooter_screen = tk.Canvas(self.root, width=800, height=600,bg='#C06C84')
+        self.shooter_screen.grid(row=1, column=1, padx=100, pady=5)
+
+        # Create enemies
+        for i in range(15):
+            enemy = self.shooter_screen.create_rectangle(10 + 40 * i, 10, 40 + 40 * i, 40, outline="white", fill= "#2A363B")
+            self.enemy_list.append(enemy)
+
+        # Player
+        self.player = self.shooter_screen.create_oval(10, 580, 30, 600, outline='blue', fill= "white")
+
+        # Question screen
+        question_screen = tk.LabelFrame(self.root, text="Maths", width=800, height=300, bg="#6C5B7B")
+        question_screen.grid(row=2, column=1, padx=10, pady=5)
+
+        # Image
+        image = PhotoImage(file=SPACESHIP_IMAGE_PATH)
+        displayimage = tk.Label(question_screen, image=image)
+        displayimage.image = image  # keep a reference!
+        displayimage.grid(row=2, column=0)
+
+        # Question and answer input
+        self.q_variable = tk.StringVar()
+        display_question = tk.Label(question_screen, textvariable=self.q_variable, font=("Arial", 25),bg="#6C5B7B")
+        display_question.grid(row=2, column=1)
+
+        self.solution_input = tk.Entry(question_screen)
+        self.solution_input.grid(row=2, column=2)
+
+        solution_entry = tk.Button(question_screen, text="Answer", command=lambda: self.evaluate(None),bg="#6C5B7B")
+        solution_entry.grid(row=2, column=3)
+
+    def generate_new_question(self):
+        self.answer, self.question = self.generate_question_level_1()
+        self.q_variable.set(self.question)
+
+    def generate_question_level_1(self):
+        while True:
+            n1 = random.randint(0, 10)
+            n2 = random.randint(0, 10)
+            operation = random.choice(['+', '-', '/', '*'])
+
+            if operation == '+':
+                question = f"{n1} + {n2}"
+                answer = n1 + n2
+            elif operation == '-':
+                question = f"{n1} - {n2}"
+                answer = n1 - n2
+            elif operation == '/':
+                if n2 == 0:
+                    n2 = 1
+                question = f"{n1} / {n2}"
+                answer = n1 / n2
+                if answer % 1 != 0:
+                    operation = "/"
+                    continue
+                else:
+                    answer = int(answer)
+            elif operation == '*':
+                question = f"{n1} * {n2}"
+                answer = n1 * n2
+            return answer, question
+        
+        
+    def generate_question_level_2(self):
+        while True:
+            n1 = random.randint(0, 100)
+            n2 = random.randint(0, 10)
+            operation = random.choice(['+', '-', '/', '*'])
+
+            if operation == '+':
+                question = f"{n1} + {n2}"
+                answer = n1 + n2
+            elif operation == '-':
+                question = f"{n1} - {n2}"
+                answer = n1 - n2
+            elif operation == '/':
+                if n2 == 0:
+                    n2 = 1
+                question = f"{n1} / {n2}"
+                answer = n1 / n2
+                if answer % 1 != 0:
+                    continue
+                else:
+                    answer = int(answer)
+            elif operation == '*':
+                question = f"{n1} * {n2}"
+                answer = n1 * n2
+            return answer, question
+
+    def generate_question_level_3(self):
+        while True:
+            n1 = random.randint(0, 100)
+            n2 = random.randint(0, 100)
+            operation = random.choice(['+', '-', '/', '*'])
+
+            if operation == '+':
+                question = f"{n1} + {n2}"
+                answer = n1 + n2
+            elif operation == '-':
+                question = f"{n1} - {n2}"
+                answer = n1 - n2
+            elif operation == '/':
+                if n2 == 0:
+                    n2 = 1
+                question = f"{n1} / {n2}"
+                answer = n1 / n2
+                if answer % 1 != 0:
+                    continue
+                else:
+                    answer = int(answer)
+            elif operation == '*':
+                question = f"{n1} * {n2}"
+                answer = n1 * n2
+            return answer, question    
+    def evaluate(self, event):
+        try:
+            answer_input = int(self.solution_input.get())
+            if answer_input == self.answer:
+                self.fire_blaster()
+                self.solution_input.delete(0, tk.END)
+                self.generate_new_question()
+            else:
+                self.solution_input.delete(0, tk.END)
+                messagebox.showwarning("Wrong", "Try again!")
+        except ValueError:
+            messagebox.showwarning("Really?", "Please enter a valid number.")
+            self.solution_input.delete(0, tk.END)
+
+    def start_game(self):
+        self.start_movement()
+
+    def start_movement(self):
+        self.start_time = time.time()
+        self.move_aliens_random()
+
+    def move_aliens_random(self):
+        if not self.aliens_frozen:
+            try:
+                enemy_coords1 = self.shooter_screen.coords(self.enemy_list[0])
+                enemy_coords2 = self.shooter_screen.coords(self.enemy_list[-1])
+            except:
+                return  
+            if enemy_coords1[0] < 40:
+                self.move_alien_r()
+            elif enemy_coords2[2] > 750:
+                self.move_alien_L()
+            else:
+                if random.choice([True, False]):
+                    self.move_alien_L()
+                else:
+                    self.move_alien_r()
+
+            current_time = time.time()
+            if current_time - self.start_time < self.movement_duration / 1000:
+                self.move_random_id = self.root.after(200, self.move_aliens_random)
+            else:
+                self.move_down()   
+
+    def move_alien_L(self):
+        if not self.aliens_frozen:
+            for enemy in self.enemy_list:
+                self.shooter_screen.move(enemy, -30, 0)
+
+    def move_alien_r(self):
+        if not self.aliens_frozen:
+            for enemy in self.enemy_list:
+                self.shooter_screen.move(enemy, 30, 0)
+
+    def move_down(self):
+        if not self.aliens_frozen:
+            for enemy in self.enemy_list:
+                self.shooter_screen.move(enemy, 0, 30)
+            movement_id = self.root.after(self.move_down_interval, self.start_movement)
+
+    def fire(self, event):
+        self.fire_blaster()
+
+    def fire_blaster(self):
+        # Freeze alien movement only for the moment the shot is fired
+        self.aliens_frozen = True
+        try:
+            player_coords = self.shooter_screen.coords(self.player)
+            player_x_center = (player_coords[0] + player_coords[2]) / 2
+        except:return
+        # Find the nearest alien based on player's position
+        nearest_alien = None
+        min_distance = float('inf')
+
+        for enemy in self.enemy_list:
+            enemy_coords = self.shooter_screen.coords(enemy)
+            alien_x_center = (enemy_coords[0] + enemy_coords[2]) / 2
+            distance = abs(alien_x_center - player_x_center)
+
+            if distance < min_distance:
+                min_distance = distance
+                nearest_alien = enemy
+
+        # Move the player under the nearest alien
+        if nearest_alien:
+            nearest_coords = self.shooter_screen.coords(nearest_alien)
+            new_player_x = (nearest_coords[0] + nearest_coords[2]) / 2
+            current_player_x = (player_coords[0] + player_coords[2]) / 2
+            self.shooter_screen.move(self.player, new_player_x - current_player_x, 0)
+
+        # Create and fire the blaster (projectile)
+        blaster_coords = self.shooter_screen.coords(self.player)
+        x = (blaster_coords[0] + blaster_coords[2]) / 2
+        blaster = self.shooter_screen.create_rectangle(x - 2, blaster_coords[1] - 10, x + 2, blaster_coords[1] - 5, fill='cyan', outline ="black")
+        self.blasters.append(blaster)
+
+        # Move the blaster
+        self.move_blaster()
+
+    def move_blaster(self):
+        aliens_destroyed = False
+
+        
+        if len(self.enemy_list) == 0:
+            self.root.unbind("<Return>")
+            self.root.bind("<space>")  
+            root.after_cancel(self.move_random_id)
+            root.after_cancel(self.blasters_id)
+           
+            
+            for child in self.root.winfo_children():
+                child.destroy()
+
+            tk.Label(self.root, text= "Good Game", font=("Arial",30)).pack()  
+                
+            return
+        else:   
+
+            # Iterate through all active blasters
+            for i in range(len(self.blasters) - 1, -1, -1):
+                blaster = self.blasters[i]
+                self.shooter_screen.move(blaster, 0, -  10)
+                blaster_coords = self.shooter_screen.coords(blaster)
+
+                # If the blaster is off-screen, remove it
+                if blaster_coords[1] < 0:
+                    self.shooter_screen.delete(blaster)
+                    self.blasters.pop(i)
+                else:
+                    # Check if the blaster hits any alien
+                    for j in range(len(self.enemy_list) - 1, -1, -1):
+                        enemy = self.enemy_list[j]
+                        if self.check_collision(blaster, enemy):
+                            # Destroy the alien and the blaster
+                            self.shooter_screen.delete(enemy)
+                            self.enemy_list.pop(j)
+                            self.shooter_screen.delete(blaster)
+                            self.blasters.pop(i)
+                            aliens_destroyed = True
+                            break
+    
+            # If any alien was destroyed, immediately resume movement
+            if aliens_destroyed:
+                self.aliens_frozen = False  # Unfreeze aliens after destroying one
+                self.move_aliens_random()
+
+            # If there are still blasters in motion, keep moving them
+            if self.blasters:
+                self.blasters_id = self.root.after(50, self.move_blaster)
+            else:
+                # If all blasters are gone, allow aliens to move again
+                self.aliens_frozen = False
+
+
+
+    def check_collision(self, blaster, alien):
+        blaster_coords = self.shooter_screen.coords(blaster)
+        alien_coords = self.shooter_screen.coords(alien)
+
+        return (blaster_coords[2] >= alien_coords[0] and
+                blaster_coords[0] <= alien_coords[2] and
+                blaster_coords[1] <= alien_coords[3] and
+                blaster_coords[3] >= alien_coords[1])
+        
+if __name__ == "__main__":
+    root = tk.Tk()
+
+    login_form = LoginForm(root)
+
+    root.mainloop()
